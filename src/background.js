@@ -1,58 +1,39 @@
 import { defaults } from './store/settings'
 import logger from './utils/logger'
 import storage from './utils/storage'
-// import iconOff from './assets/icon-off48.png'
-import iconOff from './assets/icon-on48.png'
-import iconOn from './assets/icon-on48.png'
+import iconOff from './assets/icon-off48.png'
+import iconDown from './assets/icon-down48.png'
+import iconUp from './assets/icon-up48.png'
 import './assets/icon16.png'
 import './assets/icon48.png'
 import './assets/icon128.png'
 
-let initialDisabled = false
-const disabledTabs = {}
+let initialVolume = 0
+const volumes = {}
 
 const setIcon = (tabId) => {
-  const path = disabledTabs[tabId] ? iconOff : iconOn
+  const volume = volumes[tabId] || 0
+  let path = iconOff
+  switch (true) {
+    case volume > 0.5:
+      path = iconUp
+      break
+    case volume > 0:
+      path = iconDown
+      break
+  }
   chrome.pageAction.setIcon({ tabId, path })
 }
 
 const contentLoaded = async (tabId) => {
-  const disabled = initialDisabled
-  disabledTabs[tabId] = disabled
+  const volume = initialVolume
+  volumes[tabId] = volume
   setIcon(tabId)
   chrome.tabs.sendMessage(tabId, {
-    id: 'disabledChanged',
-    data: { disabled }
-  })
-  const state = await storage.get()
-  chrome.tabs.sendMessage(tabId, {
-    id: 'stateChanged',
-    data: { state }
+    id: 'volumeChanged',
+    data: { volume }
   })
   chrome.pageAction.show(tabId)
-}
-
-const disabledToggled = (tabId) => {
-  const disabled = !disabledTabs[tabId]
-  initialDisabled = disabled
-  disabledTabs[tabId] = disabled
-  setIcon(tabId)
-  chrome.tabs.sendMessage(tabId, {
-    id: 'disabledChanged',
-    data: { disabled }
-  })
-}
-
-const stateChanged = async () => {
-  const state = await storage.get()
-  chrome.tabs.query({}, (tabs) => {
-    tabs.forEach((tab) => {
-      chrome.tabs.sendMessage(tab.id, {
-        id: 'stateChanged',
-        data: { state }
-      })
-    })
-  })
 }
 
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -68,24 +49,33 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   logger.log('chrome.runtime.onMessage', message, sender, sendResponse)
 
-  const { id } = message
+  const { id, data } = message
   const { tab } = sender
   switch (id) {
     case 'contentLoaded':
       contentLoaded(tab.id)
       break
-    case 'disabledToggled':
-      disabledToggled(tab.id)
+    case 'volumeChanged': {
+      const { volume } = data
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tabId = tabs[0].id
+        initialVolume = volume
+        volumes[tabId] = volume
+        setIcon(tabId)
+        chrome.tabs.sendMessage(tabId, {
+          id: 'volumeChanged',
+          data: { volume }
+        })
+      })
       break
-    case 'stateChanged':
-      stateChanged()
-      break
+    }
+    case 'popupCreated':
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tabId = tabs[0].id
+        sendResponse(volumes[tabId])
+      })
+      return true
   }
-})
-
-chrome.pageAction.onClicked.addListener((tab) => {
-  logger.log('chrome.pageAction.onClicked', tab)
-  disabledToggled(tab.id)
 })
 
 logger.log('background script loaded')
