@@ -1,40 +1,50 @@
 import logger from './utils/logger'
 
-const delaySec = 5
-let volume
-let timestamps = []
+const clearSec = 5
+const rateUpQueueLength = 5
+const truncateLength = 140
+let rateUp = false
+let volume = 0
+let queues = []
 
 const speak = (node) => {
   if (!volume || document.hidden) {
     return
   }
   const tags = [
-    'yt-live-chat-text-message-renderer',
+    'yt-live-chat-text-message-renderer'
     // 'yt-live-chat-paid-message-renderer'
   ]
   if (!tags.includes(node.tagName.toLowerCase())) {
     return
   }
   const text = node.querySelector('#message').textContent
-  const ssu = new SpeechSynthesisUtterance(text)
-  ssu.rate = timestamps.length ? 2 : 1
-  ssu.volume = volume
-  ssu.onstart = () => {
-    console.log(timestamps[0])
+  if (!text) {
+    return
   }
+  const truncated = text.substring(0, truncateLength)
+  const ssu = new SpeechSynthesisUtterance(truncated)
+  ssu.rate = queues.length >= rateUpQueueLength || rateUp ? 2 : 1
+  ssu.volume = volume
   ssu.onend = () => {
-    const timestamp = timestamps.shift()
-    console.log(timestamp, Date.now() - timestamp)
-    if (Date.now() - timestamp > delaySec * 1000) {
-      console.log('reset')
-      timestamps = []
+    if (!queues.length) {
+      return
+    }
+    const queue = queues.shift()
+    if (!queues.length) {
+      rateUp = false
+      return
+    }
+    if (Date.now() - queue.timestamp > clearSec * 1000) {
+      rateUp = true
+      queues = []
       window.speechSynthesis.cancel()
     }
   }
-  ssu.onerror = (e) => {
-    console.log(e)
-  }
-  timestamps.push(Date.now())
+  queues.push({
+    timestamp: Date.now(),
+    utterance: ssu
+  })
   window.speechSynthesis.speak(ssu)
 }
 
@@ -44,7 +54,9 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   const { id, data } = message
   switch (id) {
     case 'volumeChanged':
+      rateUp = false
       volume = data.volume
+      queues = []
       window.speechSynthesis.cancel()
       break
   }
