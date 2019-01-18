@@ -1,5 +1,5 @@
 # YouTube Live Chat Speaker
-[![Build Status](https://travis-ci.org/fiahfy/youtube-live-chat-speaker.svg?branch=master)](https://travis-ci.org/fiahfy/youtube-live-chat-speaker)
+[![Build Status](https://travis-ci.com/fiahfy/youtube-live-chat-speaker.svg?branch=master)](https://travis-ci.com/fiahfy/youtube-live-chat-speaker)
 
 > Chrome Extension for Message Speaker on YouTube Live Chat.
 
@@ -9,11 +9,10 @@
 
 
 ## Screenshot
-<!-- ![screenshot](./build/screenshots/screenshot.png?raw=true) -->
-
+<img src="./build/screenshots/screenshot.png?raw=true" width="376" alt="screenshot" />
 
 ## Installation
-1. Download `.zip` file from [releases page](https://github.com/fiahfy/youtube-live-chat-speaker/releases).
+1. Download `archive.zip` file from [releases page](https://github.com/fiahfy/youtube-live-chat-speaker/releases).
 2. Unzip this file.
 3. Open URL `chrome://extensions/` by Google Chrome.
 4. Enable developer mode.

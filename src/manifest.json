@@ -22,10 +22,6 @@
     "default_icon": "assets/icon48.png",
     "default_popup": "assets/popup.html"
   },
-  "options_ui": {
-    "page": "assets/options.html",
-    "open_in_tab": false
-  },
   "permissions": [
     "tabs",
     "storage"
