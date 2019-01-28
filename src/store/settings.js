@@ -1,9 +1,15 @@
-export const defaults = {}
+export const defaults = {
+  voiceURI: ''
+}
 
 export default {
   namespaced: true,
   state: {
     ...defaults
   },
-  mutations: {}
+  mutations: {
+    setVoiceURI(state, { voiceURI }) {
+      state.voiceURI = voiceURI
+    }
+  }
 }

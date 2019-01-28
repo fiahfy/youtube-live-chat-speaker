@@ -3,11 +3,40 @@ import logger from './utils/logger'
 const clearSec = 5
 const rateUpQueueLength = 5
 const truncateLength = 140
-let rateUp = false
 let volume = 0
+let settings = {}
+let voice = null
+let rateUp = false
 let queues = []
 
-const speak = (node) => {
+const getVoices = async () => {
+  return new Promise((resolve) => {
+    const voices = speechSynthesis.getVoices()
+    if (voices) {
+      resolve(voices)
+      return
+    }
+    speechSynthesis.onvoiceschanged = () => {
+      const voices = speechSynthesis.getVoices()
+      return resolve(voices)
+    }
+  })
+}
+
+const getVoice = async () => {
+  if (voice) {
+    return voice
+  }
+  const voices = await getVoices()
+  voice = voices.find((voice) => settings.voiceURI === voice.voiceURI)
+  if (voice) {
+    return voice
+  }
+  voice = voices.find((voice) => voice.default)
+  return voice
+}
+
+const speak = async (node) => {
   if (!volume || document.hidden) {
     return
   }
@@ -25,6 +54,7 @@ const speak = (node) => {
   const truncated = text.substring(0, truncateLength)
   const ssu = new SpeechSynthesisUtterance(truncated)
   ssu.rate = queues.length >= rateUpQueueLength || rateUp ? 2 : 1
+  ssu.voice = await getVoice()
   ssu.volume = volume
   ssu.onend = () => {
     if (!queues.length) {
@@ -56,6 +86,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     case 'volumeChanged':
       rateUp = false
       volume = data.volume
+      queues = []
+      window.speechSynthesis.cancel()
+      break
+    case 'stateChanged':
+      settings = data.state.settings
+      voice = null
       queues = []
       window.speechSynthesis.cancel()
       break
