@@ -6,8 +6,8 @@ const truncateLength = 140
 let volume = 0
 let settings = {}
 let voice = null
-let rateUp = false
 let queues = []
+let ssu = null
 
 const getVoices = async () => {
   return new Promise((resolve) => {
@@ -36,8 +36,36 @@ const getVoice = async () => {
   return voice
 }
 
+const shift = async () => {
+  const queue = queues.shift()
+  if (!queue) {
+    return
+  }
+  if (
+    queues.length >= rateUpQueueLength &&
+    Date.now() - queue.timestamp > clearSec * 1000
+  ) {
+    queues = queues.filter(
+      (queue) => Date.now() - queue.timestamp < clearSec * 1000
+    )
+  }
+  ssu = new SpeechSynthesisUtterance(queue.message)
+  ssu.rate = queues.length >= rateUpQueueLength ? 2 : 1
+  ssu.voice = await getVoice()
+  ssu.volume = volume
+  ssu.onend = async () => {
+    ssu = null
+    shift()
+  }
+  ssu.onerror = () => {
+    ssu = null
+    shift()
+  }
+  speechSynthesis.speak(ssu)
+}
+
 const speak = async (node) => {
-  if (!volume || document.hidden) {
+  if (!volume) {
     return
   }
   const tags = [
@@ -51,31 +79,15 @@ const speak = async (node) => {
   if (!text) {
     return
   }
-  const truncated = text.substring(0, truncateLength)
-  const ssu = new SpeechSynthesisUtterance(truncated)
-  ssu.rate = queues.length >= rateUpQueueLength || rateUp ? 2 : 1
-  ssu.voice = await getVoice()
-  ssu.volume = volume
-  ssu.onend = () => {
-    if (!queues.length) {
-      return
-    }
-    const queue = queues.shift()
-    if (!queues.length) {
-      rateUp = false
-      return
-    }
-    if (Date.now() - queue.timestamp > clearSec * 1000) {
-      rateUp = true
-      queues = []
-      window.speechSynthesis.cancel()
-    }
+  const message = text.substring(0, truncateLength)
+  const queue = {
+    message,
+    timestamp: Date.now()
   }
-  queues.push({
-    timestamp: Date.now(),
-    utterance: ssu
-  })
-  window.speechSynthesis.speak(ssu)
+  queues.push(queue)
+  if (!ssu) {
+    shift()
+  }
 }
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
@@ -84,16 +96,14 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   const { id, data } = message
   switch (id) {
     case 'volumeChanged':
-      rateUp = false
       volume = data.volume
-      queues = []
-      window.speechSynthesis.cancel()
+      if (!volume) {
+        queues = []
+      }
       break
     case 'stateChanged':
       settings = data.state.settings
       voice = null
-      queues = []
-      window.speechSynthesis.cancel()
       break
   }
 })
