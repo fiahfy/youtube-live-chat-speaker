@@ -1,7 +1,7 @@
 {
   "name": "youtube-live-chat-speaker",
   "description": "Message Speaker on YouTube Live Chat",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
     "name": "fiahfy",
     "email": "d.fiahfy@gmail.com",
@@ -22,7 +22,7 @@
     "copy-webpack-plugin": "^4.5.1",
     "css-loader": "^2.1.0",
     "eslint": "^5.6.0",
-    "eslint-config-prettier": "^3.1.0",
+    "eslint-config-prettier": "^4.0.0",
     "eslint-plugin-prettier": "^3.0.0",
     "eslint-plugin-vue": "^5.0.0-beta.4",
     "file-loader": "^3.0.1",

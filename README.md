@@ -8,8 +8,10 @@
 * Speak messages on chat.
 
 
-## Screenshot
-<img src="./build/screenshots/screenshot.png?raw=true" width="376" alt="screenshot" />
+## Screenshots
+![screenshot](./build/screenshots/screenshot1.png?raw=true)
+![screenshot](./build/screenshots/screenshot2.png?raw=true)
+
 
 ## Installation
 1. Download `archive.zip` file from [releases page](https://github.com/fiahfy/youtube-live-chat-speaker/releases).

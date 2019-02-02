@@ -33,7 +33,24 @@ const contentLoaded = async (tabId) => {
     id: 'volumeChanged',
     data: { volume }
   })
+  const state = await storage.get()
+  chrome.tabs.sendMessage(tabId, {
+    id: 'stateChanged',
+    data: { state }
+  })
   chrome.pageAction.show(tabId)
+}
+
+const stateChanged = async () => {
+  const state = await storage.get()
+  chrome.tabs.query({}, (tabs) => {
+    tabs.forEach((tab) => {
+      chrome.tabs.sendMessage(tab.id, {
+        id: 'stateChanged',
+        data: { state }
+      })
+    })
+  })
 }
 
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -69,6 +86,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })
       break
     }
+    case 'stateChanged':
+      stateChanged()
+      break
     case 'popupCreated':
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tabId = tabs[0].id
