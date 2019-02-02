@@ -1,7 +1,7 @@
 import logger from './utils/logger'
 
 let volume = 0
-let settings = {}
+let settings = null
 let voice = null
 let queues = []
 let ssu = null
@@ -62,7 +62,7 @@ const shiftQueue = async () => {
 }
 
 const speak = async (node) => {
-  if (!volume) {
+  if (!volume || !settings) {
     return
   }
   const tags = [
