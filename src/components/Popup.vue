@@ -11,7 +11,7 @@
             step="0.1"
             hide-details
             :prepend-icon="icon"
-            :prepend-icon-cb="onIconClick"
+            @click:prepend="onIconClick"
           />
         </v-layout>
       </v-container>
