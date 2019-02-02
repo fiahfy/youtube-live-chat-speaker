@@ -1,8 +1,5 @@
 import logger from './utils/logger'
 
-const clearSec = 5
-const rateUpQueueLength = 5
-const truncateLength = 140
 let volume = 0
 let settings = {}
 let voice = null
@@ -36,30 +33,30 @@ const getVoice = async () => {
   return voice
 }
 
-const shift = async () => {
-  const queue = queues.shift()
+const shiftQueue = async () => {
+  if (ssu) {
+    return
+  }
+  const queue = queues[0]
   if (!queue) {
     return
   }
-  if (
-    queues.length >= rateUpQueueLength &&
-    Date.now() - queue.timestamp > clearSec * 1000
-  ) {
-    queues = queues.filter(
-      (queue) => Date.now() - queue.timestamp < clearSec * 1000
-    )
-  }
   ssu = new SpeechSynthesisUtterance(queue.message)
-  ssu.rate = queues.length >= rateUpQueueLength ? 2 : 1
+  ssu.rate =
+    queues.length >= settings.quickQueueMessages
+      ? settings.quickRate
+      : settings.rate
   ssu.voice = await getVoice()
   ssu.volume = volume
   ssu.onend = async () => {
     ssu = null
-    shift()
+    queues.shift()
+    shiftQueue()
   }
   ssu.onerror = () => {
     ssu = null
-    shift()
+    queues.shift()
+    shiftQueue()
   }
   speechSynthesis.speak(ssu)
 }
@@ -79,15 +76,32 @@ const speak = async (node) => {
   if (!text) {
     return
   }
-  const message = text.substring(0, truncateLength)
+  const message = text.substring(0, settings.truncateMessageLength)
   const queue = {
     message,
     timestamp: Date.now()
   }
-  queues.push(queue)
-  if (!ssu) {
-    shift()
+  if (queues.length >= settings.queueMessages) {
+    return
   }
+  queues.push(queue)
+  shiftQueue()
+}
+
+const observeChat = () => {
+  const items = document.querySelector('#items.yt-live-chat-item-list-renderer')
+  if (!items) {
+    return
+  }
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      const nodes = Array.from(mutation.addedNodes)
+      nodes.forEach((node) => {
+        speak(node)
+      })
+    })
+  })
+  observer.observe(items, { childList: true })
 }
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
@@ -97,30 +111,24 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   switch (id) {
     case 'volumeChanged':
       volume = data.volume
-      if (!volume) {
-        queues = []
+      if (ssu) {
+        speechSynthesis.cancel(ssu)
       }
       break
     case 'stateChanged':
       settings = data.state.settings
       voice = null
+      if (ssu) {
+        speechSynthesis.cancel(ssu)
+      }
       break
   }
 })
 
-logger.log('content script loaded')
-
 document.addEventListener('DOMContentLoaded', async () => {
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      const nodes = Array.from(mutation.addedNodes)
-      nodes.forEach((node) => {
-        speak(node)
-      })
-    })
-  })
-  const items = document.querySelector('#items.yt-live-chat-item-list-renderer')
-  observer.observe(items, { childList: true })
-
   chrome.runtime.sendMessage({ id: 'contentLoaded' })
+
+  observeChat()
 })
+
+logger.log('content script loaded')
