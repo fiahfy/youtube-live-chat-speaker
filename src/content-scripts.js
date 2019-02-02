@@ -111,16 +111,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   switch (id) {
     case 'volumeChanged':
       volume = data.volume
-      if (ssu) {
-        speechSynthesis.cancel(ssu)
-      }
       break
     case 'stateChanged':
       settings = data.state.settings
       voice = null
-      if (ssu) {
-        speechSynthesis.cancel(ssu)
-      }
       break
   }
 })
