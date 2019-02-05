@@ -48,7 +48,7 @@ export default {
   },
   async created() {
     return new Promise((resolve) => {
-      chrome.runtime.sendMessage({ id: 'popupCreated' }, (response) => {
+      chrome.runtime.sendMessage({ id: 'popupLoaded' }, (response) => {
         this.volume = response
         resolve()
       })

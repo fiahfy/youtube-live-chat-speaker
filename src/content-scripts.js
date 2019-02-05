@@ -72,13 +72,17 @@ const speak = async (node) => {
   if (!tags.includes(node.tagName.toLowerCase())) {
     return
   }
-  const text = node.querySelector('#message').textContent
+  const message = node.querySelector('#message')
+  if (!message) {
+    return
+  }
+  const text = message.textContent
   if (!text) {
     return
   }
-  const message = text.substring(0, settings.truncateMessageLength)
+  const truncated = text.substring(0, settings.truncateMessageLength)
   const queue = {
-    message,
+    truncated,
     timestamp: Date.now()
   }
   if (queues.length >= settings.queueMessages) {

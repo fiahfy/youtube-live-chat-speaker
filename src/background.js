@@ -28,17 +28,30 @@ const setIcon = (tabId) => {
 const contentLoaded = async (tabId) => {
   const volume = initialVolume
   volumes[tabId] = volume
+
   setIcon(tabId)
+  chrome.pageAction.show(tabId)
   chrome.tabs.sendMessage(tabId, {
     id: 'volumeChanged',
     data: { volume }
   })
+
   const state = await storage.get()
   chrome.tabs.sendMessage(tabId, {
     id: 'stateChanged',
     data: { state }
   })
-  chrome.pageAction.show(tabId)
+}
+
+const volumeChanged = (tabId, volume) => {
+  initialVolume = volume
+  volumes[tabId] = volume
+
+  setIcon(tabId)
+  chrome.tabs.sendMessage(tabId, {
+    id: 'volumeChanged',
+    data: { volume }
+  })
 }
 
 const stateChanged = async () => {
@@ -56,11 +69,12 @@ const stateChanged = async () => {
 chrome.runtime.onInstalled.addListener(async (details) => {
   logger.log('chrome.runtime.onInstalled', details)
 
-  const state = {
+  const state = await storage.get()
+  const newState = {
     settings: defaults,
-    ...(await storage.get())
+    ...state
   }
-  await storage.set(state)
+  await storage.set(newState)
 })
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -72,29 +86,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'contentLoaded':
       contentLoaded(tab.id)
       break
-    case 'volumeChanged': {
-      const { volume } = data
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tabId = tabs[0].id
-        initialVolume = volume
-        volumes[tabId] = volume
-        setIcon(tabId)
-        chrome.tabs.sendMessage(tabId, {
-          id: 'volumeChanged',
-          data: { volume }
-        })
-      })
+    case 'popupLoaded':
+      sendResponse(volumes[tab.id])
+      return true
+    case 'volumeChanged':
+      volumeChanged(tab.id, data.volume)
       break
-    }
     case 'stateChanged':
       stateChanged()
       break
-    case 'popupCreated':
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tabId = tabs[0].id
-        sendResponse(volumes[tabId])
-      })
-      return true
   }
 })
 
