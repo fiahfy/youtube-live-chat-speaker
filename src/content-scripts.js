@@ -82,7 +82,7 @@ const speak = async (node) => {
   }
   const truncated = text.substring(0, settings.truncateMessageLength)
   const queue = {
-    truncated,
+    message: truncated,
     timestamp: Date.now()
   }
   if (queues.length >= settings.queueMessages) {

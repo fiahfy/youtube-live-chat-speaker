@@ -87,10 +87,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       contentLoaded(tab.id)
       break
     case 'popupLoaded':
-      sendResponse(volumes[tab.id])
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tab = tabs[0]
+        sendResponse(volumes[tab.id])
+      })
       return true
     case 'volumeChanged':
-      volumeChanged(tab.id, data.volume)
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tab = tabs[0]
+        volumeChanged(tab.id, data.volume)
+      })
       break
     case 'stateChanged':
       stateChanged()
