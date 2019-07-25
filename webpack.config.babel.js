@@ -11,13 +11,14 @@ export default {
   context: `${__dirname}/src`,
   entry: {
     background: './background',
-    'content-scripts': './content-scripts',
+    'content-script': './content-script',
     options: './options',
     popup: './popup'
   },
   output: {
     path: `${__dirname}/app/`,
-    filename: '[name].js'
+    filename: '[name].js',
+    publicPath: '../'
   },
   module: {
     rules: [
@@ -35,7 +36,7 @@ export default {
         use: ['vue-style-loader', 'css-loader']
       },
       {
-        test: /\.(jpg|gif|png|svg)$/,
+        test: /\.(jpg|gif|png|woff|woff2|eot|ttf)$/,
         loader: 'file-loader',
         options: {
           name: 'assets/[name].[ext]'
@@ -56,6 +57,8 @@ export default {
           return Buffer.from(
             JSON.stringify({
               ...JSON.parse(content.toString()),
+              name: process.env.npm_package_productName,
+              description: process.env.npm_package_description,
               version: process.env.npm_package_version
             })
           )

@@ -1,25 +1,25 @@
 <template>
   <v-app>
     <v-content>
-      <v-container fluid class="py-0">
-        <v-layout row align-center>
-          <v-slider
-            v-model="volume"
-            class="mt-0"
-            min="0"
-            max="1"
-            step="0.1"
-            hide-details
-            :prepend-icon="icon"
-            :prepend-icon-cb="onIconClick"
-          />
-        </v-layout>
+      <v-container fluid>
+        <v-slider
+          v-model="volume"
+          class="mt-0"
+          min="0"
+          max="1"
+          step="0.1"
+          hide-details
+          :prepend-icon="icon"
+          @click:prepend="onIconClick"
+        />
       </v-container>
     </v-content>
   </v-app>
 </template>
 
 <script>
+import browser from 'webextension-polyfill'
+
 export default {
   data() {
     return {
@@ -40,7 +40,7 @@ export default {
   },
   watch: {
     volume(value) {
-      chrome.runtime.sendMessage({
+      browser.runtime.sendMessage({
         id: 'volumeChanged',
         data: { volume: value }
       })
@@ -48,8 +48,8 @@ export default {
   },
   async created() {
     return new Promise((resolve) => {
-      chrome.runtime.sendMessage({ id: 'popupCreated' }, (response) => {
-        this.volume = response
+      browser.runtime.sendMessage({ id: 'popupLoaded' }).then((data) => {
+        this.volume = data.volume
         resolve()
       })
     })
@@ -62,12 +62,8 @@ export default {
 }
 </script>
 
-<style>
-@import '~vuetify/dist/vuetify.min.css';
-</style>
-
 <style scoped>
-.application {
+.v-application {
   min-width: 256px;
 }
 </style>

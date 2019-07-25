@@ -1,7 +1,8 @@
-import logger from './utils/logger'
+/* eslint-disable require-atomic-updates */
+import browser from 'webextension-polyfill'
 
 let volume = 0
-let settings = {}
+let settings = null
 let voice = null
 let queues = []
 let ssu = null
@@ -62,7 +63,7 @@ const shiftQueue = async () => {
 }
 
 const speak = async (node) => {
-  if (!volume) {
+  if (!volume || !settings) {
     return
   }
   const tags = [
@@ -72,13 +73,17 @@ const speak = async (node) => {
   if (!tags.includes(node.tagName.toLowerCase())) {
     return
   }
-  const text = node.querySelector('#message').textContent
+  const message = node.querySelector('#message')
+  if (!message) {
+    return
+  }
+  const text = message.textContent
   if (!text) {
     return
   }
-  const message = text.substring(0, settings.truncateMessageLength)
+  const truncated = text.substring(0, settings.truncateMessageLength)
   const queue = {
-    message,
+    message: truncated,
     timestamp: Date.now()
   }
   if (queues.length >= settings.queueMessages) {
@@ -104,25 +109,23 @@ const observeChat = () => {
   observer.observe(items, { childList: true })
 }
 
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  logger.log('chrome.runtime.onMessage', message, sender, sendResponse)
-
+browser.runtime.onMessage.addListener((message) => {
   const { id, data } = message
   switch (id) {
     case 'volumeChanged':
       volume = data.volume
       break
-    case 'stateChanged':
-      settings = data.state.settings
+    case 'settingsChanged':
+      settings = data.settings
       voice = null
       break
   }
 })
 
 document.addEventListener('DOMContentLoaded', async () => {
-  chrome.runtime.sendMessage({ id: 'contentLoaded' })
+  const data = await browser.runtime.sendMessage({ id: 'contentLoaded' })
+  settings = data.settings
+  volume = data.volume
 
   observeChat()
 })
-
-logger.log('content script loaded')

@@ -1,13 +1,14 @@
 import Vue from 'vue'
-import Vuetify from 'vuetify'
-import Popup from './components/Popup'
-import store from './store'
+import vuetify from './plugins/vuetify'
+import PopupPage from './components/PopupPage'
+import createStore from './store'
 
-Vue.use(Vuetify)
-
-new Vue({
-  el: '#app',
-  store,
-  components: { Popup },
-  template: '<Popup />'
+createStore().then((store) => {
+  new Vue({
+    el: '#app',
+    store,
+    components: { PopupPage },
+    template: '<PopupPage />',
+    vuetify
+  })
 })

@@ -1,17 +1,19 @@
-import { defaults } from './store/settings'
-import logger from './utils/logger'
-import storage from './utils/storage'
-import iconOff from './assets/icon-off48.png'
-import iconDown from './assets/icon-down48.png'
-import iconUp from './assets/icon-up48.png'
-import './assets/icon16.png'
-import './assets/icon48.png'
-import './assets/icon128.png'
+import browser from 'webextension-polyfill'
+import createStore from './store'
+import iconOff from './assets/icon-off.png'
+import iconDown from './assets/icon-down.png'
+import iconUp from './assets/icon-up.png'
+import './assets/icon.png'
 
 let initialVolume = 0
 const volumes = {}
 
-const setIcon = (tabId) => {
+const getSettings = async () => {
+  const store = await createStore(true)
+  return JSON.parse(JSON.stringify(store.state))
+}
+
+const setIcon = async (tabId) => {
   const volume = volumes[tabId] || 0
   let path = iconOff
   switch (true) {
@@ -22,80 +24,74 @@ const setIcon = (tabId) => {
       path = iconDown
       break
   }
-  chrome.pageAction.setIcon({ tabId, path })
+  await browser.pageAction.setIcon({ tabId, path })
 }
 
-const contentLoaded = async (tabId) => {
+const initTab = async (tabId) => {
   const volume = initialVolume
   volumes[tabId] = volume
-  setIcon(tabId)
-  chrome.tabs.sendMessage(tabId, {
+
+  await setIcon(tabId)
+  await browser.pageAction.show(tabId)
+
+  const settings = await getSettings()
+
+  return { volume, settings }
+}
+
+const volumeChanged = async (tabId, volume) => {
+  initialVolume = volume
+  volumes[tabId] = volume
+
+  await setIcon(tabId)
+
+  await browser.tabs.sendMessage(tabId, {
     id: 'volumeChanged',
     data: { volume }
   })
-  const state = await storage.get()
-  chrome.tabs.sendMessage(tabId, {
-    id: 'stateChanged',
-    data: { state }
-  })
-  chrome.pageAction.show(tabId)
 }
 
-const stateChanged = async () => {
-  const state = await storage.get()
-  chrome.tabs.query({}, (tabs) => {
-    tabs.forEach((tab) => {
-      chrome.tabs.sendMessage(tab.id, {
-        id: 'stateChanged',
-        data: { state }
+const settingsChanged = async () => {
+  const settings = await getSettings()
+  const tabs = await browser.tabs.query({})
+  for (let tab of tabs) {
+    try {
+      await browser.tabs.sendMessage(tab.id, {
+        id: 'settingsChanged',
+        data: { settings }
       })
-    })
-  })
+    } catch (e) {} // eslint-disable-line no-empty
+  }
 }
 
-chrome.runtime.onInstalled.addListener(async (details) => {
-  logger.log('chrome.runtime.onInstalled', details)
-
-  const state = {
-    settings: defaults,
-    ...(await storage.get())
-  }
-  await storage.set(state)
-})
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  logger.log('chrome.runtime.onMessage', message, sender, sendResponse)
-
+browser.runtime.onMessage.addListener(async (message, sender) => {
   const { id, data } = message
   const { tab } = sender
   switch (id) {
     case 'contentLoaded':
-      contentLoaded(tab.id)
-      break
-    case 'volumeChanged': {
-      const { volume } = data
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tabId = tabs[0].id
-        initialVolume = volume
-        volumes[tabId] = volume
-        setIcon(tabId)
-        chrome.tabs.sendMessage(tabId, {
-          id: 'volumeChanged',
-          data: { volume }
-        })
+      return await initTab(tab.id)
+    case 'popupLoaded': {
+      const tabs = await browser.tabs.query({
+        active: true,
+        currentWindow: true
       })
+      for (let tab of tabs) {
+        return { volume: volumes[tab.id] }
+      }
+      return { volume: 0 }
+    }
+    case 'volumeChanged': {
+      const tabs = await browser.tabs.query({
+        active: true,
+        currentWindow: true
+      })
+      for (let tab of tabs) {
+        await volumeChanged(tab.id, data.volume)
+      }
       break
     }
-    case 'stateChanged':
-      stateChanged()
+    case 'settingsChanged':
+      await settingsChanged()
       break
-    case 'popupCreated':
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tabId = tabs[0].id
-        sendResponse(volumes[tabId])
-      })
-      return true
   }
 })
-
-logger.log('background script loaded')
