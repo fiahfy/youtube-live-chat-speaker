@@ -1,70 +1,72 @@
 <template>
   <v-app>
     <v-content>
-      <v-container fluid>
-        <v-select v-model="voiceURI" :items="voices" label="Voice" />
-        <v-text-field
-          v-model="truncateMessageLength"
-          :placeholder="placeholder.truncateMessageLength"
-          label="Truncate Message Length"
-          type="number"
-          min="1"
-          max="140"
-          suffix="characters"
-        />
-        <v-layout row>
-          <v-flex class="pr-3">
-            <v-slider
-              v-model="rate"
-              class=""
-              label="Speaking Rate"
-              min="0"
-              max="2"
-              step="0.1"
-              hide-details
-            />
-          </v-flex>
-          <v-flex class="rate mt-3 text-xs-right body-1" shrink>
-            {{ rate }}
-          </v-flex>
-        </v-layout>
-        <v-text-field
-          v-model="queueMessages"
-          :placeholder="placeholder.queueMessages"
-          label="Queue Messages"
-          type="number"
-          min="1"
-          max="100"
-          suffix="messages"
-        />
-        <v-layout row>
-          <v-flex class="pr-3">
-            <v-slider
-              v-model="quickRate"
-              class=""
-              label="Quick Speaking Rate"
-              min="0"
-              max="2"
-              step="0.1"
-              hide-details
-            />
-          </v-flex>
-          <v-flex class="rate mt-3 text-xs-right body-1" shrink>
-            {{ quickRate }}
-          </v-flex>
-        </v-layout>
-        <v-text-field
-          v-model="quickQueueMessages"
-          :placeholder="placeholder.quickQueueMessages"
-          label="Quick Queue Messages"
-          type="number"
-          min="1"
-          max="100"
-          suffix="messages"
-        />
-        <v-btn class="mt-3" color="primary" flat block @click="onResetClick">
-          Reset
-        </v-btn>
+      <v-container class="pa-0" fluid>
+        <v-card class="pa-3" flat>
+          <v-select v-model="voiceURI" :items="voices" label="Voice" />
+          <v-text-field
+            v-model="truncateMessageLength"
+            :placeholder="placeholder.truncateMessageLength"
+            label="Truncate Message Length"
+            type="number"
+            min="1"
+            max="140"
+            suffix="characters"
+          />
+          <v-row>
+            <v-col class="pr-3">
+              <v-slider
+                v-model="rate"
+                class=""
+                label="Speaking Rate"
+                min="0"
+                max="2"
+                step="0.1"
+                hide-details
+              />
+            </v-col>
+            <v-col class="rate text-right body-1 shrink">
+              {{ formatNumber(rate) }}
+            </v-col>
+          </v-row>
+          <v-text-field
+            v-model="queueMessages"
+            :placeholder="placeholder.queueMessages"
+            label="Queue Messages"
+            type="number"
+            min="1"
+            max="100"
+            suffix="messages"
+          />
+          <v-row>
+            <v-col class="pr-3">
+              <v-slider
+                v-model="quickRate"
+                class=""
+                label="Quick Speaking Rate"
+                min="0"
+                max="2"
+                step="0.1"
+                hide-details
+              />
+            </v-col>
+            <v-col class="rate text-right body-1 shrink">
+              {{ formatNumber(quickRate) }}
+            </v-col>
+          </v-row>
+          <v-text-field
+            v-model="quickQueueMessages"
+            :placeholder="placeholder.quickQueueMessages"
+            label="Quick Queue Messages"
+            type="number"
+            min="1"
+            max="100"
+            suffix="messages"
+          />
+          <v-btn class="mt-3" depressed block @click="onResetClick">
+            Reset Settings to Default
+          </v-btn>
+        </v-card>
       </v-container>
     </v-content>
   </v-app>
@@ -158,17 +160,20 @@ export default {
     onResetClick() {
       this.resetState()
     },
+    formatNumber(value) {
+      return Number(value).toFixed(1)
+    },
     ...mapMutations(['resetState'])
   }
 }
 </script>
 
 <style scoped>
-.application {
+.v-application {
   min-width: 480px;
 }
 .rate {
   line-height: 32px;
-  width: 32px;
+  width: 56px;
 }
 </style>

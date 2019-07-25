@@ -71,13 +71,20 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
     case 'contentLoaded':
       return await initTab(tab.id)
     case 'popupLoaded': {
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true })
+      const tabs = await browser.tabs.query({
+        active: true,
+        currentWindow: true
+      })
       for (let tab of tabs) {
-        return volumes[tab.id]
+        return { volume: volumes[tab.id] }
       }
+      return { volume: 0 }
     }
     case 'volumeChanged': {
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true })
+      const tabs = await browser.tabs.query({
+        active: true,
+        currentWindow: true
+      })
       for (let tab of tabs) {
         await volumeChanged(tab.id, data.volume)
       }

@@ -1,3 +1,4 @@
+/* eslint-disable require-atomic-updates */
 import browser from 'webextension-polyfill'
 
 let volume = 0
@@ -122,7 +123,7 @@ browser.runtime.onMessage.addListener((message) => {
 })
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const data = await browser.chrome.runtime.sendMessage({ id: 'contentLoaded' })
+  const data = await browser.runtime.sendMessage({ id: 'contentLoaded' })
   settings = data.settings
 
   observeChat()
