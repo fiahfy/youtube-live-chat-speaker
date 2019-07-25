@@ -5,7 +5,7 @@
         <v-select v-model="voiceURI" :items="voices" label="Voice" />
         <v-text-field
           v-model="truncateMessageLength"
-          :placeholder="defaults.truncateMessageLength"
+          :placeholder="placeholder.truncateMessageLength"
           label="Truncate Message Length"
           type="number"
           min="1"
@@ -30,7 +30,7 @@
         </v-layout>
         <v-text-field
           v-model="queueMessages"
-          :placeholder="defaults.queueMessages"
+          :placeholder="placeholder.queueMessages"
           label="Queue Messages"
           type="number"
           min="1"
@@ -55,14 +55,14 @@
         </v-layout>
         <v-text-field
           v-model="quickQueueMessages"
-          :placeholder="defaults.quickQueueMessages"
+          :placeholder="placeholder.quickQueueMessages"
           label="Quick Queue Messages"
           type="number"
           min="1"
           max="100"
           suffix="messages"
         />
-        <v-btn class="mt-3" color="primary" flat block @click="reset">
+        <v-btn class="mt-3" color="primary" flat block @click="onResetClick">
           Reset
         </v-btn>
       </v-container>
@@ -71,13 +71,16 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
-import { defaults } from '~/store/settings'
+import { mapMutations } from 'vuex'
 
 export default {
   data() {
     return {
-      defaults,
+      placeholder: {
+        truncateMessageLength: '16',
+        queueMessages: '5',
+        quickQueueMessages: '3'
+      },
       voices: [],
       defaultVoiceURI: ''
     }
@@ -85,61 +88,60 @@ export default {
   computed: {
     voiceURI: {
       get() {
-        return this.$store.state.settings.voiceURI || this.defaultVoiceURI
+        return this.$store.state.voiceURI || this.defaultVoiceURI
       },
       set(value) {
-        this.$store.commit('settings/setVoiceURI', { voiceURI: value })
+        this.$store.commit('setVoiceURI', { voiceURI: value })
       }
     },
     truncateMessageLength: {
       get() {
-        return this.$store.state.settings.truncateMessageLength
+        return this.$store.state.truncateMessageLength
       },
       set(value) {
-        this.$store.commit('settings/setTruncateMessageLength', {
+        this.$store.commit('setTruncateMessageLength', {
           truncateMessageLength: value
         })
       }
     },
     rate: {
       get() {
-        return this.$store.state.settings.rate
+        return this.$store.state.rate
       },
       set(value) {
-        this.$store.commit('settings/setRate', { rate: value })
+        this.$store.commit('setRate', { rate: value })
       }
     },
     queueMessages: {
       get() {
-        return this.$store.state.settings.queueMessages
+        return this.$store.state.queueMessages
       },
       set(value) {
-        this.$store.commit('settings/setQueueMessages', {
+        this.$store.commit('setQueueMessages', {
           queueMessages: value
         })
       }
     },
     quickRate: {
       get() {
-        return this.$store.state.settings.quickRate
+        return this.$store.state.quickRate
       },
       set(value) {
-        this.$store.commit('settings/setQuickRate', { quickRate: value })
+        this.$store.commit('setQuickRate', { quickRate: value })
       }
     },
     quickQueueMessages: {
       get() {
-        return this.$store.state.settings.quickQueueMessages
+        return this.$store.state.quickQueueMessages
       },
       set(value) {
-        this.$store.commit('settings/setQuickQueueMessages', {
+        this.$store.commit('setQuickQueueMessages', {
           quickQueueMessages: value
         })
       }
     }
   },
   async created() {
-    await this.$store.dispatch('initialize')
     speechSynthesis.onvoiceschanged = () => {
       this.voices = speechSynthesis.getVoices().map((voice) => {
         if (voice.default) {
@@ -153,16 +155,13 @@ export default {
     }
   },
   methods: {
-    ...mapActions({
-      reset: 'reset'
-    })
+    onResetClick() {
+      this.resetState()
+    },
+    ...mapMutations(['resetState'])
   }
 }
 </script>
-
-<style>
-@import '~vuetify/dist/vuetify.min.css';
-</style>
 
 <style scoped>
 .application {

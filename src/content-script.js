@@ -1,4 +1,4 @@
-import logger from './utils/logger'
+import browser from 'webextension-polyfill'
 
 let volume = 0
 let settings = null
@@ -108,25 +108,22 @@ const observeChat = () => {
   observer.observe(items, { childList: true })
 }
 
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  logger.log('chrome.runtime.onMessage', message, sender, sendResponse)
-
+browser.runtime.onMessage.addListener((message) => {
   const { id, data } = message
   switch (id) {
     case 'volumeChanged':
       volume = data.volume
       break
-    case 'stateChanged':
-      settings = data.state.settings
+    case 'settingsChanged':
+      settings = data.settings
       voice = null
       break
   }
 })
 
 document.addEventListener('DOMContentLoaded', async () => {
-  chrome.runtime.sendMessage({ id: 'contentLoaded' })
+  const data = await browser.chrome.runtime.sendMessage({ id: 'contentLoaded' })
+  settings = data.settings
 
   observeChat()
 })
-
-logger.log('content script loaded')
