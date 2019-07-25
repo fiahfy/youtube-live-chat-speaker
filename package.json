@@ -34,8 +34,8 @@
     "vue-loader": "^15.0.5",
     "vue-template-compiler": "^2.5.16",
     "webpack": "^4.0.1",
-    "webpack-chrome-extension-reloader": "^1.1.1",
-    "webpack-cli": "^3.0.2"
+    "webpack-cli": "^3.0.2",
+    "webpack-extension-reloader": "^1.1.0"
   },
   "keywords": [
     "chrome extension",
