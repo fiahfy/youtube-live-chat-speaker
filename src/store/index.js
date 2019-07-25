@@ -30,7 +30,7 @@ const vuexPersist = new VuexPersistence({
 
 const initialState = {
   voiceURI: '',
-  truncateMessageLength: '16',
+  truncateMessageLength: '32',
   rate: '1',
   queueMessages: '5',
   quickRate: '2',
