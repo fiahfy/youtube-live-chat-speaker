@@ -125,6 +125,7 @@ browser.runtime.onMessage.addListener((message) => {
 document.addEventListener('DOMContentLoaded', async () => {
   const data = await browser.runtime.sendMessage({ id: 'contentLoaded' })
   settings = data.settings
+  volume = data.volume
 
   observeChat()
 })
