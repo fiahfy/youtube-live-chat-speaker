@@ -28,7 +28,7 @@ const vuexPersist = new VuexPersistence({
   }
 })
 
-const initialState = {
+const initialVoice = {
   voiceURI: '',
   truncateMessageLength: '32',
   rate: '1',
@@ -37,9 +37,33 @@ const initialState = {
   quickQueueMessages: '3'
 }
 
+const initialTypes = {
+  types: {
+    guest: false,
+    member: false,
+    moderator: true,
+    owner: true,
+    super_chat: false,
+    super_sticker: false,
+    membership: false
+  }
+}
+
+const initialState = {
+  ...initialVoice,
+  ...initialTypes
+}
+
 const config = {
   state: {
     ...initialState
+  },
+  getters: {
+    types(state) {
+      return Object.entries(state.types)
+        .filter(([, v]) => v)
+        .map(([k]) => k)
+    }
   },
   mutations: {
     setVoiceURI(state, { voiceURI }) {
@@ -60,10 +84,27 @@ const config = {
     setQuickQueueMessages(state, { quickQueueMessages }) {
       state.quickQueueMessages = quickQueueMessages
     },
-    resetState(state) {
-      for (let [k, v] of Object.entries(initialState)) {
+    setTypes(state, { types }) {
+      state.types = types
+    },
+    resetVoice(state) {
+      for (let [k, v] of Object.entries(initialVoice)) {
         state[k] = v
       }
+    },
+    resetTypes(state) {
+      for (let [k, v] of Object.entries(initialTypes)) {
+        state[k] = v
+      }
+    }
+  },
+  actions: {
+    setTypes({ commit }, { types }) {
+      const newTypes = Object.keys(initialState.types).reduce(
+        (carry, type) => ({ ...carry, [type]: types.includes(type) }),
+        {}
+      )
+      commit('setTypes', { types: newTypes })
     }
   },
   plugins: [
