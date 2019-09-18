@@ -39,12 +39,11 @@ const initialVoice = {
 
 const initialTypes = {
   types: {
-    guest: false,
-    member: false,
+    guest: true,
+    member: true,
     moderator: true,
     owner: true,
-    super_chat: false,
-    super_sticker: false,
+    super_chat: true,
     membership: false
   }
 }
