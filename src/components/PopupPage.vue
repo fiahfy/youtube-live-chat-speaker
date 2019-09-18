@@ -23,7 +23,8 @@ import browser from 'webextension-polyfill'
 export default {
   data() {
     return {
-      volume: 0
+      volume: 0,
+      storedVolume: 0
     }
   },
   computed: {
@@ -56,7 +57,12 @@ export default {
   },
   methods: {
     onIconClick() {
-      this.volume = 0
+      if (this.volume) {
+        this.storedVolume = this.volume
+        this.volume = 0
+      } else {
+        this.volume = this.storedVolume
+      }
     }
   }
 }

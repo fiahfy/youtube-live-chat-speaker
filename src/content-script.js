@@ -62,18 +62,41 @@ const shiftQueue = async () => {
   speechSynthesis.speak(ssu)
 }
 
+const isSpeakable = (node) => {
+  let type
+  const tagName = node.tagName.toLowerCase()
+  switch (tagName) {
+    case 'yt-live-chat-paid-message-renderer':
+      type = 'super_chat'
+      break
+    case 'yt-live-chat-legacy-paid-message-renderer':
+      type = 'membership'
+      break
+    case 'yt-live-chat-text-message-renderer':
+    default:
+      type = node.getAttribute('author-type') || 'guest'
+      break
+  }
+  return settings.types[type]
+}
+
 const speak = async (node) => {
   if (!volume || !settings) {
     return
   }
   const tags = [
-    'yt-live-chat-text-message-renderer'
-    // 'yt-live-chat-paid-message-renderer'
+    'yt-live-chat-text-message-renderer',
+    'yt-live-chat-paid-message-renderer',
+    'yt-live-chat-legacy-paid-message-renderer'
   ]
   if (!tags.includes(node.tagName.toLowerCase())) {
     return
   }
-  const message = node.querySelector('#message')
+  if (!isSpeakable(node)) {
+    return
+  }
+  const message =
+    node.querySelector('#message') || node.querySelector('#detail-text')
   if (!message) {
     return
   }
