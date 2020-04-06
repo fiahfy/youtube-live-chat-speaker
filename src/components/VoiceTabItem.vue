@@ -10,22 +10,20 @@
       max="140"
       suffix="characters"
     />
-    <v-row>
-      <v-col class="pr-3">
-        <v-slider
-          v-model="rate"
-          class=""
-          label="Speaking Rate"
-          min="0"
-          max="2"
-          step="0.1"
-          hide-details
-        />
-      </v-col>
-      <v-col class="rate text-right body-1 shrink">
+    <div class="d-flex">
+      <v-slider
+        v-model="rate"
+        class="mr-3"
+        label="Speaking Rate"
+        min="0"
+        max="2"
+        step="0.1"
+        hide-details
+      />
+      <div class="text-right body-1 align-self-center">
         {{ formatNumber(rate) }}
-      </v-col>
-    </v-row>
+      </div>
+    </div>
     <v-text-field
       v-model="queueMessages"
       :placeholder="placeholder.queueMessages"
@@ -35,22 +33,20 @@
       max="100"
       suffix="messages"
     />
-    <v-row>
-      <v-col class="pr-3">
-        <v-slider
-          v-model="quickRate"
-          class=""
-          label="Quick Speaking Rate"
-          min="0"
-          max="2"
-          step="0.1"
-          hide-details
-        />
-      </v-col>
-      <v-col class="rate text-right body-1 shrink">
+    <div class="d-flex">
+      <v-slider
+        v-model="quickRate"
+        class="mr-3"
+        label="Quick Speaking Rate"
+        min="0"
+        max="2"
+        step="0.1"
+        hide-details
+      />
+      <div class="text-right body-1 align-self-center">
         {{ formatNumber(quickRate) }}
-      </v-col>
-    </v-row>
+      </div>
+    </div>
     <v-text-field
       v-model="quickQueueMessages"
       :placeholder="placeholder.quickQueueMessages"
@@ -60,83 +56,69 @@
       max="100"
       suffix="messages"
     />
-    <v-btn class="mt-3" depressed block @click="onResetClick">
+    <v-btn class="mt-3" depressed block @click="onClickReset">
       Reset Settings to Default
     </v-btn>
   </v-card>
 </template>
 
-<script>
-import { mapMutations } from 'vuex'
+<script lang="ts">
+import { Vue, Component } from 'vue-property-decorator'
+import { settingsStore } from '~/store'
 
-export default {
-  data() {
-    return {
-      placeholder: {
-        truncateMessageLength: '16',
-        queueMessages: '5',
-        quickQueueMessages: '3'
-      },
-      voices: [],
-      defaultVoiceURI: ''
-    }
-  },
-  computed: {
-    voiceURI: {
-      get() {
-        return this.$store.state.voiceURI || this.defaultVoiceURI
-      },
-      set(value) {
-        this.$store.commit('setVoiceURI', { voiceURI: value })
-      }
-    },
-    truncateMessageLength: {
-      get() {
-        return this.$store.state.truncateMessageLength
-      },
-      set(value) {
-        this.$store.commit('setTruncateMessageLength', {
-          truncateMessageLength: value
-        })
-      }
-    },
-    rate: {
-      get() {
-        return this.$store.state.rate
-      },
-      set(value) {
-        this.$store.commit('setRate', { rate: value })
-      }
-    },
-    queueMessages: {
-      get() {
-        return this.$store.state.queueMessages
-      },
-      set(value) {
-        this.$store.commit('setQueueMessages', {
-          queueMessages: value
-        })
-      }
-    },
-    quickRate: {
-      get() {
-        return this.$store.state.quickRate
-      },
-      set(value) {
-        this.$store.commit('setQuickRate', { quickRate: value })
-      }
-    },
-    quickQueueMessages: {
-      get() {
-        return this.$store.state.quickQueueMessages
-      },
-      set(value) {
-        this.$store.commit('setQuickQueueMessages', {
-          quickQueueMessages: value
-        })
-      }
-    }
-  },
+@Component
+export default class VoiceTabItem extends Vue {
+  placeholder = {
+    truncateMessageLength: '16',
+    queueMessages: '5',
+    quickQueueMessages: '3',
+  }
+  voices: { value: string; text: string }[] = []
+  defaultVoiceURI = ''
+
+  get voiceURI() {
+    return settingsStore.voiceURI || this.defaultVoiceURI
+  }
+  set voiceURI(value) {
+    settingsStore.setVoiceURI({ voiceURI: value })
+  }
+  get truncateMessageLength() {
+    return settingsStore.truncateMessageLength
+  }
+  set truncateMessageLength(value) {
+    settingsStore.setTruncateMessageLength({
+      truncateMessageLength: value,
+    })
+  }
+  get rate() {
+    return settingsStore.rate
+  }
+  set rate(value) {
+    settingsStore.setRate({ rate: value })
+  }
+  get queueMessages() {
+    return settingsStore.queueMessages
+  }
+  set queueMessages(value) {
+    settingsStore.setQueueMessages({
+      queueMessages: value,
+    })
+  }
+  get quickRate() {
+    return settingsStore.quickRate
+  }
+  set quickRate(value) {
+    settingsStore.setQuickRate({ quickRate: value })
+  }
+  get quickQueueMessages() {
+    return settingsStore.quickQueueMessages
+  }
+  set quickQueueMessages(value) {
+    settingsStore.setQuickQueueMessages({
+      quickQueueMessages: value,
+    })
+  }
+
   async created() {
     speechSynthesis.onvoiceschanged = () => {
       this.voices = speechSynthesis.getVoices().map((voice) => {
@@ -145,26 +127,17 @@ export default {
         }
         return {
           value: voice.voiceURI,
-          text: voice.name + ' (' + voice.lang + ')'
+          text: voice.name + ' (' + voice.lang + ')',
         }
       })
     }
-  },
-  methods: {
-    onResetClick() {
-      this.resetVoice()
-    },
-    formatNumber(value) {
-      return Number(value).toFixed(1)
-    },
-    ...mapMutations(['resetVoice'])
+  }
+
+  onClickReset() {
+    settingsStore.resetVoice()
+  }
+  formatNumber(value: number) {
+    return value.toFixed(1)
   }
 }
 </script>
-
-<style scoped>
-.rate {
-  line-height: 32px;
-  width: 56px;
-}
-</style>

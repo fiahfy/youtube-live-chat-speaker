@@ -1,8 +1,8 @@
-# YouTube Live Chat Speaker
+# Chat Speaker for YouTube Live
 
-[![Build Status](https://travis-ci.com/fiahfy/youtube-live-chat-speaker.svg?branch=master)](https://travis-ci.com/fiahfy/youtube-live-chat-speaker)
+![badge](https://github.com/fiahfy/youtube-live-chat-speaker/workflows/Web%20Extension%20CI/badge.svg)
 
-> Chrome Extension for Message Speaker on YouTube Live Chat.
+> Chrome Extension for Speaking Messages on YouTube Live Chat.
 
 ## Features
 
